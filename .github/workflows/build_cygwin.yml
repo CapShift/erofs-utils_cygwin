@@ -26,7 +26,7 @@ jobs:
       - name: Clone source code
         shell: C:\tools\cygwin\bin\bash.exe --login --norc -eo pipefail -o igncr '{0}'
         run: |
-          git clone --recurse-submodules https://github.com/affggh/erofs-utils_cygwin.git -b cygwin erofs
+          git clone --recurse-submodules https://github.com/affggh/erofs-utils_cygwin.git -b dev erofs
       - name: building
         shell: C:\tools\cygwin\bin\bash.exe --login --norc -eo pipefail -o igncr '{0}'
         run: |
