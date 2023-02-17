@@ -66,20 +66,6 @@ ifeq ($(shell uname -o), Cygwin)
   endif
 endif
 
-check:
-ifneq ($(shell lzma --version | sed -n '2p' | cut -d ' ' -f2), 5.3.2alpha)  # Check installed liblzma version via lzma command
-	@echo -e "\033[91m  xz-utils not installed or liblzma version less than 5.3.2alpha  \033[0m"
-	@exit 1
-else
-	@echo -e "\033[92m  xz-utils check pass  \033[0m"
-endif
-ifeq ($(shell [ "$(shell lz4 --version | cut -d ' ' -f7 | tr -d ',' | cut -d '.' -f2)" -ge "8" ];echo $$?), 0) # Same method check lz4 version via lz4 command
-	@echo -e "\033[92m  lz4 check pass  \033[0m"
-else
-	@echo -e "\033[91m  liblz4 is too old to use or liblz4 not installed \033[0m"
-	@exit 1
-endif
-
 LIBEROFS_SRC = \
 	lib/dir.c \
 	lib/sha256.c \
