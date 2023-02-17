@@ -128,7 +128,7 @@ erofs-utils-version.h: VERSION
 ifeq ($(USECUSTOM_VERSION), true)
 	@echo "#define PACKAGE_VERSION \"$(PACKAGE_VERSION)-$(AUTHOR)-$(BUILD)\"" | tr -d "\n" > $@
 else
-	@echo "#define PACKAGE_VERSION \"$(PACKAGE_VERSION)-dirty\"" | tr -d "\n" > $@
+	@echo "#define PACKAGE_VERSION \"$(PACKAGE_VERSION)\"" | tr -d "\n" > $@
 endif
 
 
