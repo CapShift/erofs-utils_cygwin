@@ -42,11 +42,14 @@ INCLUDES = \
 	-I./libselinux/include \
 	-I./base/include \
 	-I./libcutils/include \
-	-I./e2fsprog/lib/uuid
+	-I./e2fsprog/lib/uuid \
+	-I./xz/src/liblzma/api \
+	-I./pcre/tmp \
+	-I./lz4/lib
 
 .PHONY: all
 
-all: erofs-utils-version.h bin/mkfs.erofs.exe bin/dump.erofs.exe bin/fsck.erofs.exe
+all: pcre/tmp/pcre.h erofs-utils-version.h bin/mkfs.erofs.exe bin/dump.erofs.exe bin/fsck.erofs.exe
 	@for i in $(shell for i in $$(cygcheck ./bin/mkfs.erofs.exe); do for j in $$(echo $$i | grep "cyg" | grep ".dll"); do cygpath $$j;done ;done); do \
     echo -e "\033[95m\tCOPY\t$$i\033[0m"; \
     cp -f $$i ./bin/; \
@@ -162,6 +165,8 @@ lz4/lib/liblz4.a:
 
 pcre/tmp/libpcre.a:
 	@cd pcre && cmake -B tmp && cd tmp && $(MAKE)
+
+pcre/tmp/pcre.h: pcre/tmp/libpcre.a
 
 bin/mkfs.erofs.exe: $(MKFS_OBJ) \
     .lib/liberofs.a \
