@@ -130,6 +130,7 @@ ifeq ($(USECUSTOM_VERSION), true)
 else
 	@echo "#define PACKAGE_VERSION \"$(PACKAGE_VERSION)-dirty\"" | tr -d "\n" > $@
 endif
+	@sed "s/\n//g" -i $@
 
 .lib/liberofs.a: $(LIBEROFS_OBJ)
 	@mkdir -p `dirname $@`
