@@ -21,7 +21,7 @@ jobs:
         uses: egor-tensin/setup-cygwin@v3
         with:
           platform: x64
-          packages: cmake make gcc-g++ github iconv-devel zlib-devel clang zip unzip curl
+          packages: cmake make gcc-g++ github iconv-devel zlib-devel clang zip unzip curl sed
 
       - name: Clone source code
         shell: C:\tools\cygwin\bin\bash.exe --login --norc -eo pipefail -o igncr '{0}'
@@ -32,7 +32,7 @@ jobs:
         run: |
           cd erofs
           # build
-          make -j$(nproc --all)
+          make LDFLAGS=-static
           # output
           ls -al bin
           
