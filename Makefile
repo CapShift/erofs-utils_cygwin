@@ -58,7 +58,7 @@ all: erofs-utils-version.h bin/mkfs.erofs.exe bin/dump.erofs.exe bin/fsck.erofs.
 USECUSTOM_VERSION = true
 PACKAGE_VERSION = $(shell sed -n '1p' VERSION | tr -d '\n')
 
-# INCLUDES += -include"erofs-utils-version.h"
+INCLUDES += -include"erofs-utils-version.h"
 
 AUTHOR = "affggh"
 ifeq ($(shell uname -o), Cygwin)
@@ -67,9 +67,6 @@ ifeq ($(shell uname -o), Cygwin)
     BUILD = "cygwin64"
   endif
 endif
-
-# custom version
-CFLAGS += -DPACKAGE_VERSION="$(PACKAGE_VERSION)-$(AUTHOR)-$(BUILD)"
 
 LIBEROFS_SRC = \
 	lib/dir.c \
