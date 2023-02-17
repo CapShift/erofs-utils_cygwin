@@ -55,7 +55,7 @@ all: erofs-utils-version.h bin/mkfs.erofs.exe bin/dump.erofs.exe bin/fsck.erofs.
     done
 
 
-USECUSTOM_VERSION = true
+USECUSTOM_VERSION = false
 PACKAGE_VERSION = $(shell sed -n '1p' VERSION | tr -d '\n')
 
 INCLUDES += -include"erofs-utils-version.h"
@@ -130,7 +130,7 @@ ifeq ($(USECUSTOM_VERSION), true)
 else
 	@echo "#define PACKAGE_VERSION \"$(PACKAGE_VERSION)-dirty\"" | tr -d "\n" > $@
 endif
-	@sed "s/\n//g" -i $@
+
 
 .lib/liberofs.a: $(LIBEROFS_OBJ)
 	@mkdir -p `dirname $@`
