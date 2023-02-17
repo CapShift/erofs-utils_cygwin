@@ -32,7 +32,7 @@ override CXXFLAGS := $(CXXFLAGS) -std=c++17 -stdlib=libc++ \
     -DLZ4HC_ENABLED \
   	-DHAVE_LIBLZMA \
     -DWITH_ANDROID
-override LDFLAGS := $(LDFLAGS) -L/usr/local/lib -llz4 -lpcre -llzma
+override LDFLAGS := $(LDFLAGS)
 
 SHELL = bash
 
@@ -46,7 +46,7 @@ INCLUDES = \
 
 .PHONY: all
 
-all: check erofs-utils-version.h bin/mkfs.erofs.exe bin/dump.erofs.exe bin/fsck.erofs.exe
+all: erofs-utils-version.h bin/mkfs.erofs.exe bin/dump.erofs.exe bin/fsck.erofs.exe
 	@for i in $(shell for i in $$(cygcheck ./bin/mkfs.erofs.exe); do for j in $$(echo $$i | grep "cyg" | grep ".dll"); do cygpath $$j;done ;done); do \
     echo -e "\033[95m\tCOPY\t$$i\033[0m"; \
     cp -f $$i ./bin/; \
@@ -102,7 +102,11 @@ LIBEROFS_SRC = \
 	lib/data.c \
     lib/compressor.c \
 	lib/decompress.c \
-	lib/namei.c
+	lib/namei.c \
+	lib/fragments.c \
+	lib/dedupe.c \
+	lib/rb_tree.c
+
 LIBEROFS_OBJ = $(patsubst %.c,obj/%.o,$(LIBEROFS_SRC))
 
 MKFS_SRC = mkfs/main.c
@@ -159,13 +163,27 @@ libcutils/.lib/libcutils.a:
 e2fsprog/.lib/libext2_uuid.a:
 	@cd e2fsprog && $(MAKE)
 
+xz/tmp/liblzma.a:
+	@echo patch microlzma_decoder.c cause CmakeLists not include this
+	@grep "microlzma_encoder.c" xz/CMakeLists.txt || sed "s/    src\/liblzma\/check\/sha256.c/    src\/liblzma\/check\/sha256.c\n    src\/liblzma\/common\/microlzma_decoder.c\n    src\/liblzma\/common\/microlzma_encoder.c/g" -i xz/CMakeLists.txt
+	@cd xz && cmake -B tmp && cd tmp && $(MAKE)
+
+lz4/lib/liblz4.a:
+	@cd lz4 && $(MAKE) lib
+
+pcre/tmp/libpcre.a:
+	@cd pcre && cmake -B tmp && cd tmp && $(MAKE)
+
 bin/mkfs.erofs.exe: $(MKFS_OBJ) \
     .lib/liberofs.a \
     libcutils/.lib/libcutils.a \
     e2fsprog/.lib/libext2_uuid.a \
     liblog/.lib/liblog.a \
     libselinux/.lib/libselinux.a \
-    base/.lib/libbase.a 
+    base/.lib/libbase.a \
+	lz4/lib/liblz4.a \
+	pcre/tmp/libpcre.a \
+	xz/tmp/liblzma.a
 	@mkdir -p bin
 	@echo -e "\033[95m\tLD\t$@\033[0m"
 	@$(CXX) $(CXXFLAGS) $(INCLUDES) $^ -o $@ $(LDFLAGS)
@@ -177,7 +195,10 @@ bin/dump.erofs.exe: $(DUMP_OBJ) \
     e2fsprog/.lib/libext2_uuid.a \
     liblog/.lib/liblog.a \
     libselinux/.lib/libselinux.a \
-    base/.lib/libbase.a 
+    base/.lib/libbase.a \
+	lz4/lib/liblz4.a \
+	pcre/tmp/libpcre.a \
+	xz/tmp/liblzma.a
 	@mkdir -p bin
 	@echo -e "\033[95m\tLD\t$@\033[0m"
 	@$(CXX) $(CXXFLAGS) $(INCLUDES) $^ -o $@ $(LDFLAGS)
@@ -189,7 +210,10 @@ bin/fsck.erofs.exe: $(FSCK_OBJ) \
     e2fsprog/.lib/libext2_uuid.a \
     liblog/.lib/liblog.a \
     libselinux/.lib/libselinux.a \
-    base/.lib/libbase.a 
+    base/.lib/libbase.a \
+	lz4/lib/liblz4.a \
+	pcre/tmp/libpcre.a \
+	xz/tmp/liblzma.a
 	@mkdir -p bin
 	@echo -e "\033[95m\tLD\t$@\033[0m"
 	@$(CXX) $(CXXFLAGS) $(INCLUDES) $^ -o $@ $(LDFLAGS)
@@ -217,3 +241,6 @@ endif
 	@cd libcutils && $(MAKE) clean
 	@cd e2fsprog && $(MAKE) clean
 	@cd base && $(MAKE) clean
+	@cd lz4 && $(MAKE) clean
+	@cd xz && rm -rf tmp
+	@cd pcre && rm -rf tmp

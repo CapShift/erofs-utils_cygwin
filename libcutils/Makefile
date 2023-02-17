@@ -1,7 +1,7 @@
 override CC = clang
 override CXX = clang++
 
-CXXFLAGS = -stdlib=libc++ -D_GNU_SOURCE
+CXXFLAGS = -stdlib=libc++ -D_GNU_SOURCE -static
 
 INCLUDES = -I./include -I../base/include -I../liblog/include
 
