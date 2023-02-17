@@ -60,11 +60,11 @@ PACKAGE_VERSION = $(shell sed -n '1p' VERSION | tr -d '\n')
 
 INCLUDES += -include"erofs-utils-version.h"
 
-AUTHOR = "affggh"
+AUTHOR = affggh
 ifeq ($(shell uname -o), Cygwin)
-  BUILD = "cygwin"
+  BUILD = cygwin
   ifeq ($(shell uname -m), x86_64)
-    BUILD = "cygwin64"
+    BUILD = cygwin64
   endif
 endif
 
@@ -126,9 +126,9 @@ obj/%.o: %.cpp
 erofs-utils-version.h: VERSION
 	@echo -e "\033[94m\tGEN\t$@\033[0m"
 ifeq ($(USECUSTOM_VERSION), true)
-	@echo "#define PACKAGE_VERSION \"$(PACKAGE_VERSION)-$(AUTHOR)-$(BUILD)\"" > $@
+	@echo "#define PACKAGE_VERSION \"$(PACKAGE_VERSION)-$(AUTHOR)-$(BUILD)\"" | tr -d "\n" > $@
 else
-	@echo "#define PACKAGE_VERSION \"$(PACKAGE_VERSION)-dirty\"" > $@
+	@echo "#define PACKAGE_VERSION \"$(PACKAGE_VERSION)-dirty\"" | tr -d "\n" > $@
 endif
 
 .lib/liberofs.a: $(LIBEROFS_OBJ)
