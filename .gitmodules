@@ -1,0 +1,9 @@
+[submodule "xz"]
+	path = xz
+	url = https://github.com/tukaani-project/xz
+[submodule "lz4"]
+	path = lz4
+	url = https://github.com/lz4/lz4
+[submodule "pcre"]
+	path = pcre
+	url = https://github.com/vmg/pcre
