@@ -55,8 +55,8 @@ all: erofs-utils-version.h bin/mkfs.erofs.exe bin/dump.erofs.exe bin/fsck.erofs.
     done
 
 
-USECUSTOM_VERSION = false
-PACKAGE_VERSION = $(shell sed -n '1p' VERSION | tr -d '\n')
+USECUSTOM_VERSION = true
+PACKAGE_VERSION = 1.5
 
 INCLUDES += -include"erofs-utils-version.h"
 
