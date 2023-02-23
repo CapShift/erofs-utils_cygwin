@@ -32,7 +32,7 @@ override CXXFLAGS := $(CXXFLAGS) -std=c++17 -stdlib=libc++ \
     -DLZ4HC_ENABLED \
   	-DHAVE_LIBLZMA \
     -DWITH_ANDROID
-override LDFLAGS := $(LDFLAGS) -lpcre
+override LDFLAGS := $(LDFLAGS) -L/usr/local/lib -lpcre -llzma
 
 SHELL = bash
 
@@ -167,8 +167,7 @@ bin/mkfs.erofs.exe: $(MKFS_OBJ) \
     liblog/.lib/liblog.a \
     libselinux/.lib/libselinux.a \
     base/.lib/libbase.a \
-	lz4/lib/liblz4.a \
-	xz/tmp/liblzma.a
+	lz4/lib/liblz4.a
 	@mkdir -p bin
 	@echo -e "\033[95m\tLD\t$@\033[0m"
 	@$(CXX) $(CXXFLAGS) $(INCLUDES) $^ -o $@ $(LDFLAGS)
@@ -181,8 +180,7 @@ bin/dump.erofs.exe: $(DUMP_OBJ) \
     liblog/.lib/liblog.a \
     libselinux/.lib/libselinux.a \
     base/.lib/libbase.a \
-	lz4/lib/liblz4.a \
-	xz/tmp/liblzma.a
+	lz4/lib/liblz4.a
 	@mkdir -p bin
 	@echo -e "\033[95m\tLD\t$@\033[0m"
 	@$(CXX) $(CXXFLAGS) $(INCLUDES) $^ -o $@ $(LDFLAGS)
@@ -195,8 +193,7 @@ bin/fsck.erofs.exe: $(FSCK_OBJ) \
     liblog/.lib/liblog.a \
     libselinux/.lib/libselinux.a \
     base/.lib/libbase.a \
-	lz4/lib/liblz4.a \
-	xz/tmp/liblzma.a
+	lz4/lib/liblz4.a
 	@mkdir -p bin
 	@echo -e "\033[95m\tLD\t$@\033[0m"
 	@$(CXX) $(CXXFLAGS) $(INCLUDES) $^ -o $@ $(LDFLAGS)
@@ -225,5 +222,3 @@ endif
 	@cd e2fsprog && $(MAKE) clean
 	@cd base && $(MAKE) clean
 	@cd lz4 && $(MAKE) clean
-	@cd xz && rm -rf tmp
-	@cd pcre && rm -rf tmp
