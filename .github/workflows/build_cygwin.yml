@@ -21,12 +21,25 @@ jobs:
         uses: egor-tensin/setup-cygwin@v3
         with:
           platform: x64
-          packages: cmake make gcc-g++ github iconv-devel zlib-devel clang llvm zip unzip curl sed libpcre-devel libpcre2-devel
+          packages: cmake make gcc-g++ github iconv-devel zlib-devel clang llvm zip unzip curl sed libpcre-devel libpcre2-devel liblzma-devel
 
       - name: Clone source code
         shell: C:\tools\cygwin\bin\bash.exe --login --norc -eo pipefail -o igncr '{0}'
         run: |
           git clone --recurse-submodules https://github.com/affggh/erofs-utils_cygwin.git -b dev erofs
+      
+      - name: Generate custom header file
+        shell: C:\tools\cygwin\bin\bash.exe --login --norc -eo pipefail -o igncr '{0}'
+        run: |
+          cd erofs
+          printf "#defined PACKAGE_VERSION \"%s\"\n" "$(sed -n '1p' VERSION | tr -d '\n')-cygwin64-affggh_$(date +%y%m%d)" > erofs-utils-version.h
+          if [ -f "erofs-utils-version.h" ]; then
+            echo "Success generated erofs-utils-version.h"
+          else
+            echo "Failed generated erofs-utils-version.h"
+            exit 1
+          fi
+
       - name: building
         shell: C:\tools\cygwin\bin\bash.exe --login --norc -eo pipefail -o igncr '{0}'
         run: |
