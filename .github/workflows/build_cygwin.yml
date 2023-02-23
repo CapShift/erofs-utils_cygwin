@@ -48,7 +48,7 @@ jobs:
         run: |
           cd erofs
           # build
-          make LDFLAGS=-static
+          make -j$(nproc --all)
           # output
           ls -al bin
           
