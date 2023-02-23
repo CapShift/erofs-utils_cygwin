@@ -21,7 +21,7 @@ jobs:
         uses: egor-tensin/setup-cygwin@v3
         with:
           platform: x64
-          packages: cmake make gcc-g++ github iconv-devel zlib-devel clang llvm zip unzip curl sed libpcre-devel libpcre2-devel liblzma-devel
+          packages: cmake make gcc-g++ github iconv-devel zlib-devel clang llvm zip unzip curl sed libpcre-devel libpcre2-devel liblzma-devel gettext gettext-devel libtool automake autoconf
 
       - name: Clone source code
         shell: C:\tools\cygwin\bin\bash.exe --login --norc -eo pipefail -o igncr '{0}'
@@ -32,10 +32,8 @@ jobs:
         shell: C:\tools\cygwin\bin\bash.exe --login --norc -eo pipefail -o igncr '{0}'
         run: |
           cd erofs/xz
-          echo Try to patch cmake file
-          grep "microlzma_encoder.c" CMakeLists.txt || sed "s/    src\/liblzma\/check\/sha256.c/    src\/liblzma\/check\/sha256.c\n    src\/liblzma\/common\/microlzma_decoder.c\n    src\/liblzma\/common\/microlzma_encoder.c/g" -i CMakeLists.txt
-          cmake -B build
-          cd build
+          ./autogen.sh
+          ./configure
           make -j$(nproc --all) && make install
 
       - name: Install pcre
