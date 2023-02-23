@@ -27,7 +27,24 @@ jobs:
         shell: C:\tools\cygwin\bin\bash.exe --login --norc -eo pipefail -o igncr '{0}'
         run: |
           git clone --recurse-submodules https://github.com/affggh/erofs-utils_cygwin.git -b dev erofs
-      
+          
+      - name: Install liblzma
+        shell: C:\tools\cygwin\bin\bash.exe --login --norc -eo pipefail -o igncr '{0}'
+        run: |
+          cd erofs/xz
+          echo Try to patch cmake file
+          grep "microlzma_encoder.c" CMakeLists.txt || sed "s/    src\/liblzma\/check\/sha256.c/    src\/liblzma\/check\/sha256.c\n    src\/liblzma\/common\/microlzma_decoder.c\n    src\/liblzma\/common\/microlzma_encoder.c/g" -i CMakeLists.txt
+          cmake -B build
+          cd build
+          make -j$(nproc --all) && make install
+
+      - name: Install pcre
+        shell: C:\tools\cygwin\bin\bash.exe --login --norc -eo pipefail -o igncr '{0}'
+        run: |
+            cd erofs/pcre
+            ./configure
+            make && make install
+
       - name: Generate custom header file
         shell: C:\tools\cygwin\bin\bash.exe --login --norc -eo pipefail -o igncr '{0}'
         run: |
@@ -43,12 +60,12 @@ jobs:
           find /usr/local/lib -name liblzma*
           find /lib -name liblzma*
 
-      - name: building
+      - name: Building
         shell: C:\tools\cygwin\bin\bash.exe --login --norc -eo pipefail -o igncr '{0}'
         run: |
           cd erofs
           # build
-          make -j$(nproc --all)
+          make -j$(nproc --all) LDFLAGS="-static -L/usr/local/lib"
           # output
           ls -al bin
           
