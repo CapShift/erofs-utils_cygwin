@@ -32,6 +32,8 @@ enum {
 	TIMESTAMP_CLAMPING,
 };
 
+#define EROFS_MAX_COMPR_CFGS		64
+
 struct erofs_configure {
 	const char *c_version;
 	int c_dbg_lvl;
@@ -39,6 +41,7 @@ struct erofs_configure {
 	bool c_legacy_compress;
 #ifndef NDEBUG
 	bool c_random_pclusterblks;
+	bool c_random_algorithms;
 #endif
 	char c_timeinherit;
 	char c_chunkbits;
@@ -57,8 +60,8 @@ struct erofs_configure {
 	char *c_src_path;
 	char *c_blobdev_path;
 	char *c_compress_hints_file;
-	char *c_compr_alg_master;
-	int c_compr_level_master;
+	char *c_compr_alg[EROFS_MAX_COMPR_CFGS];
+	int c_compr_level[EROFS_MAX_COMPR_CFGS];
 	char c_force_inodeversion;
 	char c_force_chunkformat;
 	/* < 0, xattr disabled and INT_MAX, always use inline xattrs */
