@@ -32,7 +32,7 @@ override CXXFLAGS := $(CXXFLAGS) -std=c++17 -stdlib=libc++ \
     -DLZ4HC_ENABLED \
   	-DHAVE_LIBLZMA \
     -DWITH_ANDROID
-override LDFLAGS := $(LDFLAGS) -L/usr/local/lib -lpcre -llzma
+override LDFLAGS := $(LDFLAGS) -lpcre -llzma
 
 SHELL = bash
 
