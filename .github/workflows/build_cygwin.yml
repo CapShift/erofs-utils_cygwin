@@ -32,7 +32,7 @@ jobs:
         shell: C:\tools\cygwin\bin\bash.exe --login --norc -eo pipefail -o igncr '{0}'
         run: |
           cd erofs
-          printf "#defined PACKAGE_VERSION \"%s\"\n" "$(sed -n '1p' VERSION | tr -d '\n')-cygwin64-affggh_$(date +%y%m%d)" > erofs-utils-version.h
+          printf "#define PACKAGE_VERSION \"%s\"\n" "$(sed -n '1p' VERSION | tr -d '\n')-cygwin64-affggh_$(date +%y%m%d)" > erofs-utils-version.h
           if [ -f "erofs-utils-version.h" ]; then
             echo "Success generated erofs-utils-version.h"
           else
