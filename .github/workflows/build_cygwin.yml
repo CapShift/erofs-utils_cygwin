@@ -27,6 +27,17 @@ jobs:
         shell: C:\tools\cygwin\bin\bash.exe --login --norc -eo pipefail -o igncr '{0}'
         run: |
           git clone --recurse-submodules https://github.com/affggh/erofs-utils_cygwin.git -b dev erofs
+          cd erofs
+          # for extract.erofs
+          git clone https://github.com/sekaiacg/erofs-utils erofs-utils
+          
+      - name: Patch @sekaiacg repo
+        shell: C:\tools\cygwin\bin\bash.exe --login --norc -eo pipefail -o igncr '{0}'
+        run: |
+          cd erofs/erofs-utils/extract
+          for i in $(ls *.cpp); do
+            sed "s/\[\[unlikely\]\]//g" -i $i && echo Patch $i
+          done
           
       - name: Install liblzma
         shell: C:\tools\cygwin\bin\bash.exe --login --norc -eo pipefail -o igncr '{0}'
