@@ -44,11 +44,12 @@ INCLUDES = \
 	-I./libcutils/include \
 	-I./e2fsprog/lib/uuid \
 	-I./xz/src/liblzma/api \
-	-I./lz4/lib
+	-I./lz4/lib \
+	-I./erofs-utils/extract/include
 
 .PHONY: all
 
-all: erofs-utils-version.h bin/mkfs.erofs.exe bin/dump.erofs.exe bin/fsck.erofs.exe
+all: erofs-utils-version.h bin/mkfs.erofs.exe bin/dump.erofs.exe bin/fsck.erofs.exe bin/extract.erofs.exe
 	@for i in $(shell for i in $$(cygcheck ./bin/mkfs.erofs.exe); do for j in $$(echo $$i | grep "cyg" | grep ".dll"); do cygpath $$j;done ;done); do \
     echo -e "\033[95m\tCOPY\t$$i\033[0m"; \
     cp -f $$i ./bin/; \
@@ -106,6 +107,12 @@ DUMP_OBJ = $(patsubst %.c,obj/%.o,$(DUMP_SRC))
 FSCK_SRC = fsck/main.c
 FSCK_OBJ = $(patsubst %.c,obj/%.o,$(FSCK_SRC))
 
+EXTRACT_SRC = \
+    erofs-utils/extract/ErofsNode.cpp \
+    erofs-utils/extract/ExtractHelper.cpp \
+    erofs-utils/extract/ExtractOperation.cpp \
+    erofs-utils/extract/main.cpp
+EXTRACT_OBJ = $(patsubst %.cpp,obj/%.o,$(EXTRACT_SRC))
 #  echo -e "\033[94mtest\033[0m"
 
 obj/%.o: %.c
@@ -152,11 +159,6 @@ libcutils/.lib/libcutils.a:
 e2fsprog/.lib/libext2_uuid.a:
 	@cd e2fsprog && $(MAKE)
 
-xz/tmp/liblzma.a:
-	@echo patch microlzma_decoder.c cause CmakeLists not include this
-	@grep "microlzma_encoder.c" xz/CMakeLists.txt || sed "s/    src\/liblzma\/check\/sha256.c/    src\/liblzma\/check\/sha256.c\n    src\/liblzma\/common\/microlzma_decoder.c\n    src\/liblzma\/common\/microlzma_encoder.c/g" -i xz/CMakeLists.txt
-	@cd xz && cmake -B tmp && cd tmp && $(MAKE)
-
 lz4/lib/liblz4.a:
 	@cd lz4 && $(MAKE) lib
 
@@ -198,6 +200,19 @@ bin/fsck.erofs.exe: $(FSCK_OBJ) \
 	@echo -e "\033[95m\tLD\t$@\033[0m"
 	@$(CXX) $(CXXFLAGS) $(INCLUDES) $^ -o $@ $(LDFLAGS)
 	@$(STRIP) --strip-all $@
+
+bin/extract.erofs.exe: $(EXTRACT_OBJ) \
+    .lib/liberofs.a \
+    libcutils/.lib/libcutils.a \
+    e2fsprog/.lib/libext2_uuid.a \
+    liblog/.lib/liblog.a \
+    libselinux/.lib/libselinux.a \
+    base/.lib/libbase.a \
+	lz4/lib/liblz4.a
+	@mkdir -p bin
+	@echo -e "\033[95m\tLD\t$@\033[0m"
+	@$(CXX) $(CXXFLAGS) $(INCLUDES) $^ -o $@ $(LDFLAGS)
+	@$(STRIP) --strip-unneeded $@
 
 clean:
 ifeq ($(shell [[ -f "erofs-utils-version.h" ]];echo $$?), 0)
