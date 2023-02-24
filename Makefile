@@ -31,7 +31,8 @@ override CXXFLAGS := $(CXXFLAGS) -std=c++17 -stdlib=libc++ -static \
     -DLZ4_ENABLED \
     -DLZ4HC_ENABLED \
   	-DHAVE_LIBLZMA \
-    -DWITH_ANDROID
+    -DWITH_ANDROID \
+    -DNDEBUG
 override LDFLAGS := $(LDFLAGS) -lpcre -llzma
 
 SHELL = bash
