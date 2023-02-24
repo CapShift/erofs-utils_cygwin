@@ -19,7 +19,7 @@ override CFLAGS := $(CFLAGS) \
     -DLZ4HC_ENABLED \
   	-DHAVE_LIBLZMA \
     -DWITH_ANDROID
-override CXXFLAGS := $(CXXFLAGS) -std=c++17 -stdlib=libc++ \
+override CXXFLAGS := $(CXXFLAGS) -std=c++17 -stdlib=libc++ -static \
     -Wall \
     -Werror \
     -Wno-ignored-qualifiers \
