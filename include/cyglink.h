@@ -2,6 +2,7 @@
 #define __CYGLINK_H
 
 #ifdef __CYGWIN__
+#include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <string.h>
