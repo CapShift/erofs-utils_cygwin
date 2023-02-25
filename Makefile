@@ -37,7 +37,7 @@ override CFLAGS := $(CFLAGS) \
 	-DNDEBUG
 override CXXFLAGS := $(CXXFLAGS) -std=c++2a -stdlib=libc++ -static \
     -Wall -Os \
-    $(CFLAGS) -include"cyglink.h"
+    $(CFLAGS)
 override LDFLAGS := $(LDFLAGS) -fstack-protector-strong \
     -Wl,--fatal-warnings \
 	-Qunused-arguments \
