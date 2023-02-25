@@ -6,34 +6,43 @@ override CXX = clang++
 override STRIP = strip
 
 override CFLAGS := $(CFLAGS) \
-    -Wall \
+    -Wall -Os \
+	-D_FORTIFY_SOURCE=2 \
+	-fdata-sections \
+	-ffunction-sections \
+	-fvisibility=hidden \
+	-fvisibility-inlines-hidden \
     -Werror \
     -Wno-ignored-qualifiers \
     -Wno-pointer-arith \
     -Wno-unused-parameter \
     -Wno-unused-function \
 	-Wno-unused-variable \
-    -DHAVE_LIBSELINUX \
-    -DHAVE_LIBUUID \
-    -DLZ4_ENABLED \
-    -DLZ4HC_ENABLED \
-  	-DHAVE_LIBLZMA \
-    -DWITH_ANDROID
-override CXXFLAGS := $(CXXFLAGS) -std=c++17 -stdlib=libc++ -static \
-    -Wall \
-    -Werror \
-    -Wno-ignored-qualifiers \
-    -Wno-pointer-arith \
-    -Wno-unused-parameter \
-    -Wno-unused-function \
+	-funwind-tables \
+	-fstack-protector-strong \
+	-Wformat \
+	-Werror=format-security \
+	-no-canonical-prefixes \
+	-fno-exceptions \
+	-fno-rtti \
     -DHAVE_LIBSELINUX \
     -DHAVE_LIBUUID \
     -DLZ4_ENABLED \
     -DLZ4HC_ENABLED \
   	-DHAVE_LIBLZMA \
     -DWITH_ANDROID \
-    -DNDEBUG
-override LDFLAGS := $(LDFLAGS) -lpcre -llzma
+	-D_FILE_OFFSET_BITS=64 \
+	-D_LARGEFILE_SOURCE \
+	-D_LARGEFILE64_SOURCE \
+	-DNDEBUG
+override CXXFLAGS := $(CXXFLAGS) -std=c++2a -stdlib=libc++ -static \
+    -Wall -Os \
+    $(CFLAGS)
+override LDFLAGS := $(LDFLAGS) -fstack-protector-strong \
+    -Wl,--fatal-warnings \
+	-Qunused-arguments \
+	-Wl,--no-undefined \
+	-L/usr/local/lib -lpcre -llzma
 
 SHELL = bash
 
