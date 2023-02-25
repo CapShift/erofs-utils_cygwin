@@ -38,6 +38,8 @@ jobs:
           for i in $(ls *.cpp); do
             sed "s/\[\[unlikely\]\]//g" -i $i && echo Patch $i
           done
+          sed -i "s/symlink(buf, filePath)/cyglink(buf, filePath)/g" ExtractHelper.cpp && echo 'Patch symlink -> cyglink'
+          sed -i "/LOGCW(\"failed to set times: %s\", path);/d" ExtractHelper.cpp && echo "Patch delete failed to set times"
           
       - name: Install liblzma
         shell: C:\tools\cygwin\bin\bash.exe --login --norc -eo pipefail -o igncr '{0}'
