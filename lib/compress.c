@@ -95,7 +95,7 @@ static void z_erofs_write_indexes(struct z_erofs_vle_compress_ctx *ctx)
 		 * A lcluster cannot have three parts with the middle one which
 		 * is well-compressed for !ztailpacking cases.
 		 */
-		DBG_BUGON(!ctx->e.raw && !cfg.c_ztailpacking);
+		DBG_BUGON(!ctx->e.raw && !cfg.c_ztailpacking && !cfg.c_fragments);
 		DBG_BUGON(ctx->e.partial);
 		type = ctx->e.raw ? Z_EROFS_VLE_CLUSTER_TYPE_PLAIN :
 			Z_EROFS_VLE_CLUSTER_TYPE_HEAD;
@@ -457,7 +457,7 @@ frag_packing:
 			if (ret < 0)
 				return ret;
 			ctx->e.compressedblks = 0; /* indicate a fragment */
-			ctx->e.raw = true;
+			ctx->e.raw = false;
 			ctx->fragemitted = true;
 			fix_dedupedfrag = false;
 		/* tailpcluster should be less than 1 block */
@@ -899,22 +899,26 @@ int erofs_write_compressed_file(struct erofs_inode *inode, int fd)
 	ctx.remaining = inode->i_size - inode->fragment_size;
 	ctx.fix_dedupedfrag = false;
 	ctx.fragemitted = false;
+	if (cfg.c_all_fragments && !erofs_is_packed_inode(inode) &&
+	    !inode->fragment_size) {
+		ret = z_erofs_pack_file_from_fd(inode, fd, ctx.tof_chksum);
+	} else {
+		while (ctx.remaining) {
+			const u64 rx = min_t(u64, ctx.remaining,
+					     sizeof(ctx.queue) - ctx.tail);
 
-	while (ctx.remaining) {
-		const u64 readcount = min_t(u64, ctx.remaining,
-					    sizeof(ctx.queue) - ctx.tail);
+			ret = read(fd, ctx.queue + ctx.tail, rx);
+			if (ret != rx) {
+				ret = -errno;
+				goto err_bdrop;
+			}
+			ctx.remaining -= rx;
+			ctx.tail += rx;
 
-		ret = read(fd, ctx.queue + ctx.tail, readcount);
-		if (ret != readcount) {
-			ret = -errno;
-			goto err_bdrop;
+			ret = vle_compress_one(&ctx);
+			if (ret)
+				goto err_free_idata;
 		}
-		ctx.remaining -= readcount;
-		ctx.tail += readcount;
-
-		ret = vle_compress_one(&ctx);
-		if (ret)
-			goto err_free_idata;
 	}
 	DBG_BUGON(ctx.head != ctx.tail);
 
@@ -928,7 +932,7 @@ int erofs_write_compressed_file(struct erofs_inode *inode, int fd)
 		z_erofs_write_indexes(&ctx);
 		ctx.e.length = inode->fragment_size;
 		ctx.e.compressedblks = 0;
-		ctx.e.raw = true;
+		ctx.e.raw = false;
 		ctx.e.partial = false;
 		ctx.e.blkaddr = ctx.blkaddr;
 	}
