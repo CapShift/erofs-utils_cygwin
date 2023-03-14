@@ -124,6 +124,8 @@ unsigned int erofs_iput(struct erofs_inode *inode)
 	if (inode->eof_tailraw)
 		free(inode->eof_tailraw);
 	list_del(&inode->i_hash);
+	if (inode->i_srcpath)
+		free(inode->i_srcpath);
 	free(inode);
 	return 0;
 }
@@ -910,8 +912,9 @@ static int erofs_fill_inode(struct erofs_inode *inode, struct stat *st,
 		return -EINVAL;
 	}
 
-	strncpy(inode->i_srcpath, path, sizeof(inode->i_srcpath) - 1);
-	inode->i_srcpath[sizeof(inode->i_srcpath) - 1] = '\0';
+	inode->i_srcpath = strdup(path);
+	if (!inode->i_srcpath)
+		return -ENOMEM;
 
 	inode->dev = st->st_dev;
 	inode->i_ino[1] = st->st_ino;
@@ -982,10 +985,9 @@ static struct erofs_inode *erofs_iget_from_path(const char *path, bool is_src)
 
 	ret = erofs_fill_inode(inode, &st, path);
 	if (ret) {
-		free(inode);
+		erofs_iput(inode);
 		return ERR_PTR(ret);
 	}
-
 	return inode;
 }
 

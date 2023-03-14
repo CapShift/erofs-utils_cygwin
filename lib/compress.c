@@ -371,7 +371,8 @@ static bool z_erofs_fixup_deduped_fragment(struct z_erofs_vle_compress_ctx *ctx,
 		  inode->fragment_size, inode->fragmentoff | 0ULL);
 
 	/* it's the end */
-	ctx->head += newsize;
+	DBG_BUGON(ctx->tail - ctx->head + ctx->remaining != newsize);
+	ctx->head = ctx->tail;
 	ctx->remaining = 0;
 	return true;
 }
@@ -627,7 +628,8 @@ static void *write_compacted_indexes(u8 *out,
 				blkaddr += cblks;
 				*dummy_head = false;
 			} else if (i + 1 == vcnt) {
-				offset = cv[i].u.delta[1];
+				offset = min_t(u16, cv[i].u.delta[1],
+						(1 << logical_clusterbits) - 1);
 			} else {
 				offset = cv[i].u.delta[0];
 			}
