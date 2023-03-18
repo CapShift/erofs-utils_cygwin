@@ -69,7 +69,7 @@ all: erofs-utils-version.h bin/mkfs.erofs.exe bin/dump.erofs.exe bin/fsck.erofs.
 USECUSTOM_VERSION = true
 PACKAGE_VERSION = 1.5
 
-INCLUDES += -include"erofs-utils-version.h"
+INCLUDES += -include"erofs-utils-version.h" -include"cyglink.h"
 
 AUTHOR = affggh
 ifeq ($(shell uname -o), Cygwin)
