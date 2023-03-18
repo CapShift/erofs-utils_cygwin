@@ -87,6 +87,7 @@ static void usage(void)
 {
 	fputs("usage: [options] FILE DIRECTORY\n\n"
 	      "Generate erofs image from DIRECTORY to FILE, and [options] are:\n"
+	      " -b#                   set block size to # (# = page size by default)\n"
 	      " -d#                   set output message level to # (maximum 9)\n"
 	      " -x#                   set xattr tolerance to # (< 0, disable xattrs; default 2)\n"
 	      " -zX[,Y][:..]          X=compressor (Y=compression level, optional)\n"
@@ -130,6 +131,8 @@ static void usage(void)
 	      "\nAvailable compressors are: ", stderr);
 	print_available_compressors(stderr, ", ");
 }
+
+static unsigned int pclustersize_packed, pclustersize_max;
 
 static int parse_extended_opts(const char *opts)
 {
@@ -227,13 +230,12 @@ handle_fragment:
 			cfg.c_fragments = true;
 			if (vallen) {
 				i = strtoull(value, &endptr, 0);
-				if (endptr - value != vallen ||
-				    i < EROFS_BLKSIZ || i % EROFS_BLKSIZ) {
+				if (endptr - value != vallen) {
 					erofs_err("invalid pcluster size for the packed file %s",
 						  next);
 					return -EINVAL;
 				}
-				cfg.c_pclusterblks_packed = i / EROFS_BLKSIZ;
+				pclustersize_packed = i;
 			}
 		}
 
@@ -277,7 +279,7 @@ static int mkfs_parse_options_cfg(int argc, char *argv[])
 	int opt, i;
 	bool quiet = false;
 
-	while ((opt = getopt_long(argc, argv, "C:E:L:T:U:d:x:z:",
+	while ((opt = getopt_long(argc, argv, "C:E:L:T:U:b:d:x:z:",
 				  long_options, NULL)) != -1) {
 		switch (opt) {
 		case 'z':
@@ -289,6 +291,15 @@ static int mkfs_parse_options_cfg(int argc, char *argv[])
 			i = mkfs_parse_compress_algs(optarg);
 			if (i)
 				return i;
+			break;
+
+		case 'b':
+			i = atoi(optarg);
+			if (i < 512 || i > EROFS_MAX_BLOCK_SIZE) {
+				erofs_err("invalid block size %s", optarg);
+				return -EINVAL;
+			}
+			sbi.blkszbits = ilog2(i);
 			break;
 
 		case 'd':
@@ -420,14 +431,12 @@ static int mkfs_parse_options_cfg(int argc, char *argv[])
 #endif
 		case 'C':
 			i = strtoull(optarg, &endptr, 0);
-			if (*endptr != '\0' ||
-			    i < EROFS_BLKSIZ || i % EROFS_BLKSIZ) {
+			if (*endptr != '\0') {
 				erofs_err("invalid physical clustersize %s",
 					  optarg);
 				return -EINVAL;
 			}
-			cfg.c_pclusterblks_max = i / EROFS_BLKSIZ;
-			cfg.c_pclusterblks_def = cfg.c_pclusterblks_max;
+			pclustersize_max = i;
 			break;
 		case 11:
 			i = strtol(optarg, &endptr, 0);
@@ -438,11 +447,6 @@ static int mkfs_parse_options_cfg(int argc, char *argv[])
 			cfg.c_chunkbits = ilog2(i);
 			if ((1 << cfg.c_chunkbits) != i) {
 				erofs_err("chunksize %s must be a power of two",
-					  optarg);
-				return -EINVAL;
-			}
-			if (i < EROFS_BLKSIZ) {
-				erofs_err("chunksize %s must be larger than block size",
 					  optarg);
 				return -EINVAL;
 			}
@@ -485,7 +489,7 @@ static int mkfs_parse_options_cfg(int argc, char *argv[])
 		}
 	}
 
-	if (cfg.c_blobdev_path && cfg.c_chunkbits < LOG_BLOCK_SIZE) {
+	if (cfg.c_blobdev_path && cfg.c_chunkbits < sbi.blkszbits) {
 		erofs_err("--blobdev must be used together with --chunksize");
 		return -EINVAL;
 	}
@@ -526,6 +530,36 @@ static int mkfs_parse_options_cfg(int argc, char *argv[])
 		cfg.c_dbg_lvl = EROFS_ERR;
 		cfg.c_showprogress = false;
 	}
+	if (cfg.c_compr_alg[0] && erofs_blksiz() != PAGE_SIZE) {
+		erofs_err("compression is unsupported for now with block size %u",
+			  erofs_blksiz());
+		return -EINVAL;
+	}
+	if (pclustersize_max) {
+		if (pclustersize_max < erofs_blksiz() ||
+		    pclustersize_max % erofs_blksiz()) {
+			erofs_err("invalid physical clustersize %u",
+				  pclustersize_max);
+			return -EINVAL;
+		}
+		cfg.c_pclusterblks_max = pclustersize_max >> sbi.blkszbits;
+		cfg.c_pclusterblks_def = cfg.c_pclusterblks_max;
+	}
+	if (cfg.c_chunkbits && cfg.c_chunkbits < sbi.blkszbits) {
+		erofs_err("chunksize %u must be larger than block size",
+			  1u << cfg.c_chunkbits);
+		return -EINVAL;
+	}
+
+	if (pclustersize_packed) {
+		if (pclustersize_max < erofs_blksiz() ||
+		    pclustersize_max % erofs_blksiz()) {
+			erofs_err("invalid pcluster size for the packed file %u",
+				  pclustersize_packed);
+			return -EINVAL;
+		}
+		cfg.c_pclusterblks_packed = pclustersize_packed >> sbi.blkszbits;
+	}
 	return 0;
 }
 
@@ -536,7 +570,7 @@ int erofs_mkfs_update_super_block(struct erofs_buffer_head *bh,
 {
 	struct erofs_super_block sb = {
 		.magic     = cpu_to_le32(EROFS_SUPER_MAGIC_V1),
-		.blkszbits = LOG_BLOCK_SIZE,
+		.blkszbits = sbi.blkszbits,
 		.inos   = cpu_to_le64(sbi.inos),
 		.build_time = cpu_to_le64(sbi.build_time),
 		.build_time_nsec = cpu_to_le32(sbi.build_time_nsec),
@@ -549,8 +583,7 @@ int erofs_mkfs_update_super_block(struct erofs_buffer_head *bh,
 		.extra_devices = cpu_to_le16(sbi.extra_devices),
 		.devt_slotoff = cpu_to_le16(sbi.devt_slotoff),
 	};
-	const unsigned int sb_blksize =
-		round_up(EROFS_SUPER_END, EROFS_BLKSIZ);
+	const u32 sb_blksize = round_up(EROFS_SUPER_END, erofs_blksiz());
 	char *buf;
 
 	*blocks         = erofs_mapbh(NULL);
@@ -581,11 +614,12 @@ int erofs_mkfs_update_super_block(struct erofs_buffer_head *bh,
 static int erofs_mkfs_superblock_csum_set(void)
 {
 	int ret;
-	u8 buf[EROFS_BLKSIZ];
+	u8 buf[EROFS_MAX_BLOCK_SIZE];
 	u32 crc;
+	unsigned int len;
 	struct erofs_super_block *sb;
 
-	ret = blk_read(0, buf, 0, 1);
+	ret = blk_read(0, buf, 0, erofs_blknr(sizeof(buf)));
 	if (ret) {
 		erofs_err("failed to read superblock to set checksum: %s",
 			  erofs_strerror(ret));
@@ -606,7 +640,11 @@ static int erofs_mkfs_superblock_csum_set(void)
 	/* turn on checksum feature */
 	sb->feature_compat = cpu_to_le32(le32_to_cpu(sb->feature_compat) |
 					 EROFS_FEATURE_COMPAT_SB_CHKSUM);
-	crc = erofs_crc32c(~0, (u8 *)sb, EROFS_BLKSIZ - EROFS_SUPER_OFFSET);
+	if (erofs_blksiz() > EROFS_SUPER_OFFSET)
+		len = erofs_blksiz() - EROFS_SUPER_OFFSET;
+	else
+		len = erofs_blksiz();
+	crc = erofs_crc32c(~0, (u8 *)sb, len);
 
 	/* set up checksum field to erofs_super_block */
 	sb->checksum = cpu_to_le32(crc);
@@ -626,6 +664,7 @@ static void erofs_mkfs_default_options(void)
 {
 	cfg.c_showprogress = true;
 	cfg.c_legacy_compress = false;
+	sbi.blkszbits = ilog2(PAGE_SIZE);
 	sbi.feature_incompat = EROFS_FEATURE_INCOMPAT_LZ4_0PADDING;
 	sbi.feature_compat = EROFS_FEATURE_COMPAT_SB_CHKSUM |
 			     EROFS_FEATURE_COMPAT_MTIME;
@@ -785,9 +824,9 @@ int main(int argc, char **argv)
 	if (cfg.c_dedupe) {
 		if (!cfg.c_compr_alg[0]) {
 			erofs_err("Compression is not enabled.  Turn on chunk-based data deduplication instead.");
-			cfg.c_chunkbits = LOG_BLOCK_SIZE;
+			cfg.c_chunkbits = sbi.blkszbits;
 		} else {
-			err = z_erofs_dedupe_init(EROFS_BLKSIZ);
+			err = z_erofs_dedupe_init(erofs_blksiz());
 			if (err) {
 				erofs_err("failed to initialize deduplication: %s",
 					  erofs_strerror(err));
