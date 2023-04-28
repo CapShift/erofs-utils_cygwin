@@ -67,5 +67,5 @@ jobs:
       - name: Upload DTBO Artifact
         uses: actions/upload-artifact@v3.1.2
         with:
-          name: erofs_cygwin64_${{ env.TIME }}
-          path: erofs/erofs_cygwin64.zip
+          name: erofs_cygwin64
+          path: C:\tools\cygwin\home\runneradmin\erofs\erofs_cygwin64.zip
