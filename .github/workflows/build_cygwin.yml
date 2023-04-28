@@ -64,11 +64,8 @@ jobs:
           cd erofs
           zip -r erofs_cygwin64.zip bin
           
-      - name: Upload output to GH-Release
-        uses: ncipollo/release-action@v1.8.6
+      - name: Upload DTBO Artifact
+        uses: actions/upload-artifact@v3.1.2
         with:
-          artifacts: C:\tools\cygwin\home\runneradmin\erofs\erofs_cygwin64.zip
-          name: "erofs-${{ github.run_number }}-cygwin64"
-          tag: "erofs-${{ github.run_number }}-cygwin64"
-          bodyFile: C:\tools\cygwin\home\runneradmin\erofs\VERSION
-          token: ${{ secrets.GITHUB_TOKEN }}
+          name: erofs_cygwin64_${{ env.TIME }}
+          path: erofs/erofs_cygwin64.zip
