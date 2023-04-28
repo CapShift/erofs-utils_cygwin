@@ -25,7 +25,7 @@ jobs:
       - name: Setup environment
         run: |
           sudo apt-get update        
-          sudo apt-get install -y bc bison build-essential ccache curl flex g++-multilib gcc-multilib clang llvm git gnupg gperf autopoint libtool gettext perl m4 po4a libpcre++-dev imagemagick lib32ncurses5-dev lib32readline-dev lib32z1-dev liblz4-tool libncurses5 libncurses5-dev libsdl1.2-dev libssl-dev libxml2 libxml2-utils lzop pngcrush rsync schedtool squashfs-tools xsltproc zip zlib1g-dev autoconf
+          sudo apt-get install -y p7zip-full bc bison build-essential ccache curl flex g++-multilib gcc-multilib clang llvm git gnupg gperf autopoint libtool gettext perl m4 po4a libpcre++-dev imagemagick lib32ncurses5-dev lib32readline-dev lib32z1-dev liblz4-tool libncurses5 libncurses5-dev libsdl1.2-dev libssl-dev libxml2 libxml2-utils lzop pngcrush rsync schedtool squashfs-tools xsltproc zip zlib1g-dev autoconf
       
       - name: Clone repo
         run: |
@@ -46,14 +46,14 @@ jobs:
           echo "EROFS_VERSION=$(sed -n '1p' VERSION | tr -d '\n')" >> $GITHUB_ENV
           ./scripts/patch-all
           make -j$(nproc --all)
-          ls -al out/**
           
       - name: Compress out
         run: |
           cd $GITHUB_WORKSPACE/erofs
-          7za a -tZIP erofs-utils_linux_x86_64.zip bin/*
+          7za a -tzip erofs-utils_linux_x86_64.zip bin/*
+
       - name: Upload Artifact
         uses: actions/upload-artifact@v3.1.2
         with:
-          name: erofs-utils_linux_x86_64_${{ env.TIME }}
+          name: erofs-utils_linux_x86_64
           path: erofs/erofs-utils_linux_x86_64.zip
