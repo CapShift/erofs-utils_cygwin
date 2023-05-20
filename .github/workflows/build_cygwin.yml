@@ -68,4 +68,4 @@ jobs:
         uses: actions/upload-artifact@v3.1.2
         with:
           name: erofs_cygwin64
-          path: C:\tools\cygwin\home\runneradmin\erofs\erofs_cygwin64.zip
+          path: C:\tools\cygwin\home\runneradmin\erofs
