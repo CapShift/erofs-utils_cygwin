@@ -36,36 +36,16 @@ jobs:
           cd erofs
           sh scripts/patch-all
 
-      - name: Install xz for liblzma
-        shell: C:\tools\cygwin\bin\bash.exe --login --norc -eo pipefail -o igncr '{0}'
-        run: |
-          git clone https://github.com/xz-mirror/xz xz
-          cd xz
-          ./autogen.sh || true
-          ./configure
-          make -j$(nproc --all) && make install
 
-      - name: Building
-        shell: C:\tools\cygwin\bin\bash.exe --login --norc -eo pipefail -o igncr '{0}'
-        run: |
-          cd erofs
-          # build
-          make -j$(nproc --all)
-          # output
-          ls -lh bin
-          # strip them to reduce size
-          for i in $(find bin -name \*.exe); do
-            strip --strip-unneeded $i && echo "STRIP $i"
-          done
           
       - name: Repack out
         shell: C:\tools\cygwin\bin\bash.exe --login --norc -eo pipefail -o igncr '{0}'
         run: |
-          cd erofs
-          zip -r erofs_cygwin64.zip bin
+          rm -rf erofs/.git
+          zip -r erofs_source.zip erofs
           
       - name: Upload DTBO Artifact
         uses: actions/upload-artifact@v3.1.2
         with:
-          name: erofs_cygwin64
-          path: C:\tools\cygwin\home\runneradmin\erofs\erofs_cygwin64.zip
+          name: erofs_source
+          path: C:\tools\cygwin\home\runneradmin\erofs_source.zip
